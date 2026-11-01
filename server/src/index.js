@@ -10,6 +10,7 @@ import { handleUpload, upload } from "./upload.js";
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
+const host = process.env.HOST || "0.0.0.0";
 
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
@@ -18,6 +19,18 @@ const allowedOrigins = (process.env.CORS_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim().replace(/\/$/, ""))
   .filter(Boolean);
+
+if (process.env.NODE_ENV === "production" && allowedOrigins.length === 0) {
+  console.warn(
+    "CORS_ORIGINS is not set. All origins can call the public API.",
+  );
+}
+
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  next();
+});
 
 app.use(
   cors({
@@ -101,18 +114,21 @@ app.use((error, req, res, next) => {
   });
 });
 
-const server = app.listen(port, "0.0.0.0", () => {
-  const interfaces = os.networkInterfaces();
-  const lan = Object.values(interfaces)
-    .flat()
-    .find(
-      (entry) =>
-        entry && entry.family === "IPv4" && !entry.internal,
-    );
+const server = app.listen(port, host, () => {
+  console.log(`Mandy API running at http://${host}:${port}`);
 
-  console.log(`Mandy API running at http://localhost:${port}`);
-  if (lan) {
-    console.log(`On your network: http://${lan.address}:${port}`);
+  if (host === "0.0.0.0") {
+    const interfaces = os.networkInterfaces();
+    const lan = Object.values(interfaces)
+      .flat()
+      .find(
+        (entry) =>
+          entry && entry.family === "IPv4" && !entry.internal,
+      );
+
+    if (lan) {
+      console.log(`On your network: http://${lan.address}:${port}`);
+    }
   }
 });
 

@@ -1,0 +1,23 @@
+[Unit]
+Description=Mandy API
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/apps/Mandy/server
+EnvironmentFile=/home/ubuntu/apps/Mandy/server/.env
+ExecStart=/usr/local/bin/node src/index.js
+Restart=always
+RestartSec=3
+TimeoutStopSec=10
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/home/ubuntu/apps/Mandy/server/data
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
